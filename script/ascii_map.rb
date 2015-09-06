@@ -1,3 +1,5 @@
+# encoding: UTF-8
+
 SHIFT = 0x80
 ASCII_MAP = {
   'a'           => [ 4, false ],
