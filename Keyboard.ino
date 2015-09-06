@@ -32,10 +32,43 @@ static const ModifierState LOCKED                 = 6;
 static const ModifierState HELD                   = 7;
 
 typedef struct {
+  void (*press)(char);
+  void (*release)(char);
+} ModifierHandler;
+
+void pressNormalModifier(char code) {
+  Keyboard.press(code);
+};
+
+void releaseNormalModifier(char code) {
+  Keyboard.release(code);
+};
+
+ModifierHandler normalModifierHandler = {
+  &pressNormalModifier,
+  &releaseNormalModifier
+};
+
+boolean functionKeyPressed;
+
+void pressFunctionKey(char code) {
+  functionKeyPressed = true;
+};
+
+void releaseFunctionKey(char code) {
+  functionKeyPressed = false;
+};
+
+ModifierHandler functionKeyHandler = {
+  &pressFunctionKey,
+  &releaseFunctionKey
+};
+
+typedef struct {
   int pin;
   char code;
-  boolean isModifier;
   int mask;
+  ModifierHandler *modifierHandler;
   unsigned long lastDebounceTime;
   int previousState;
   int state;
@@ -45,42 +78,46 @@ typedef struct {
 } Key;
 
 Key allKeys[] = {
-  { KEY_LEFT_CTRL_PIN,  (char) KEY_LEFT_CTRL,  true, 0 },
-  { KEY_LEFT_SHIFT_PIN, (char) KEY_LEFT_SHIFT, true, 0 },
-  { KEY_LEFT_ALT_PIN,   (char) KEY_LEFT_ALT,   true, 0 },
-  { KEY_LEFT_GUI_PIN,   (char) KEY_LEFT_GUI,   true, 0 },
-  { LEFT_PINKY_PIN,   ' ', false, 0b0000001000000000 },
-  { LEFT_RING_PIN,    ' ', false, 0b0000000100000000 },
-  { LEFT_MIDDLE_PIN,  ' ', false, 0b0000000010000000 },
-  { LEFT_INDEX_PIN,   ' ', false, 0b0000000001000000 },
-  { LEFT_THUMB_PIN,   ' ', false, 0b0000000000100000 },
-  { RIGHT_PINKY_PIN,  ' ', false, 0b0000000000010000 },
-  { RIGHT_RING_PIN,   ' ', false, 0b0000000000001000 },
-  { RIGHT_MIDDLE_PIN, ' ', false, 0b0000000000000100 },
-  { RIGHT_INDEX_PIN,  ' ', false, 0b0000000000000010 },
-  { RIGHT_THUMB_PIN,  ' ', false, 0b0000000000000001 },
+  { KEY_LEFT_CTRL_PIN,  (char) KEY_LEFT_CTRL,  0, &normalModifierHandler },
+  { KEY_LEFT_SHIFT_PIN, (char) KEY_LEFT_SHIFT, 0, &normalModifierHandler },
+  { KEY_LEFT_ALT_PIN,   (char) KEY_LEFT_ALT,   0, &normalModifierHandler },
+  { KEY_LEFT_GUI_PIN,   (char) KEY_LEFT_GUI,   0, &normalModifierHandler },
+  { KEY_FUNCTION_PIN,   0,                     0, &functionKeyHandler },
+  { LEFT_PINKY_PIN,   0, 0b0000001000000000, 0 },
+  { LEFT_RING_PIN,    0, 0b0000000100000000, 0 },
+  { LEFT_MIDDLE_PIN,  0, 0b0000000010000000, 0 },
+  { LEFT_INDEX_PIN,   0, 0b0000000001000000, 0 },
+  { LEFT_THUMB_PIN,   0, 0b0000000000100000, 0 },
+  { RIGHT_PINKY_PIN,  0, 0b0000000000010000, 0 },
+  { RIGHT_RING_PIN,   0, 0b0000000000001000, 0 },
+  { RIGHT_MIDDLE_PIN, 0, 0b0000000000000100, 0 },
+  { RIGHT_INDEX_PIN,  0, 0b0000000000000010, 0 },
+  { RIGHT_THUMB_PIN,  0, 0b0000000000000001, 0 },
 };
 static const int allKeyCount = sizeof(allKeys)/sizeof(Key);
+
+static const Key functionKey = allKeys[4];
 
 Key *modifiers[] = {
   &allKeys[0],
   &allKeys[1],
   &allKeys[2],
   &allKeys[3],
+  &allKeys[4],
 };
 static const int modifierCount = sizeof(modifiers)/sizeof(Key*);
 
 Key *keys[] = {
-  &allKeys[4],
-  &allKeys[5],
-  &allKeys[6],
-  &allKeys[7],
-  &allKeys[8],
-  &allKeys[9],
+  &allKeys[ 5],
+  &allKeys[ 6],
+  &allKeys[ 7],
+  &allKeys[ 8],
+  &allKeys[ 9],
   &allKeys[10],
   &allKeys[11],
   &allKeys[12],
   &allKeys[13],
+  &allKeys[14],
 };
 static const int keyCount = sizeof(keys)/sizeof(Key*);
 
@@ -137,6 +174,7 @@ void setup() {
   chord = 0;
   waitingForChord = false;
   chordTriggered = false;
+  functionKeyPressed = false;
 
   Keyboard.begin();
 }
@@ -173,11 +211,11 @@ void handleModifiers() {
             key->modifierState = STUCK_AWAITING_LOCK;
             break;
           case HELD_AWAITING_LOCK:
-            Keyboard.release(key->code);
+            (*key->modifierHandler).release(key->code);
             key->modifierState = RELEASED_AWAITING_LOCK;
             break;
           case HELD:
-            Keyboard.release(key->code);
+            (*key->modifierHandler).release(key->code);
             key->modifierState = OFF;
             break;
         };
@@ -185,7 +223,7 @@ void handleModifiers() {
       case JUST_PRESSED:
         switch(key->modifierState) {
           case OFF:
-            Keyboard.press(key->code);
+            (*key->modifierHandler).press(key->code);
             key->lastPressTime = millis();
             key->modifierState = AWAITING_STICKY;
             break;
@@ -193,15 +231,15 @@ void handleModifiers() {
             key->modifierState = LOCKED;
             break;
           case LOCKED:
-            Keyboard.release(key->code);
+            (*key->modifierHandler).release(key->code);
             key->modifierState = OFF;
             break;
           case STUCK:
-            Keyboard.release(key->code);
+            (*key->modifierHandler).release(key->code);
             key->modifierState = OFF;
             break;
           case RELEASED_AWAITING_LOCK:
-            Keyboard.press(key->code);
+            (*key->modifierHandler).press(key->code);
             key->modifierState = LOCKED;
             break;
         };
@@ -211,11 +249,11 @@ void handleModifiers() {
     if (chordTriggered) {
       switch(key->modifierState) {
         case STUCK_AWAITING_LOCK:
-          Keyboard.release(key->code);
+          (*key->modifierHandler).release(key->code);
           key->modifierState = OFF;
           break;
         case STUCK:
-          Keyboard.release(key->code);
+          (*key->modifierHandler).release(key->code);
           key->modifierState = OFF;
           break;
       }
@@ -269,14 +307,22 @@ Keystroke* lookupChord(int chord) {
 
 void pressChord(int chord) {
   Keystroke* k = lookupChord(chord);
-  Keyboard.press1(k->code, k->shift);
+  if (functionKeyPressed) {
+    Keyboard.press1(100, false);
+  } else {
+    Keyboard.press1(k->code, k->shift);
+  }
   chordTriggered = true;
   waitingForChord = false;
 }
 
 void releaseChord(int chord) {
   Keystroke* k = lookupChord(chord);
-  Keyboard.release1(k->code, k->shift);
+  if (functionKeyPressed) {
+    Keyboard.release1(100, false);
+  } else {
+    Keyboard.release1(k->code, k->shift);
+  }
 }
 
 void processChord() {
