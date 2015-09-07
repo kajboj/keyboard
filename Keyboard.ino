@@ -2,6 +2,7 @@ typedef struct {
   short chord;
   char code;
   bool shift;
+  char fnCode;
 } Keystroke;
 
 #include "chord_map"
@@ -308,7 +309,7 @@ Keystroke* lookupChord(int chord) {
 void pressChord(int chord) {
   Keystroke* k = lookupChord(chord);
   if (functionKeyPressed) {
-    Keyboard.press1(100, false);
+    Keyboard.press1(k->fnCode, false);
   } else {
     Keyboard.press1(k->code, k->shift);
   }
@@ -318,10 +319,9 @@ void pressChord(int chord) {
 
 void releaseChord(int chord) {
   Keystroke* k = lookupChord(chord);
-  if (functionKeyPressed) {
-    Keyboard.release1(100, false);
-  } else {
-    Keyboard.release1(k->code, k->shift);
+  Keyboard.release1(k->code, k->shift);
+  if (k->fnCode != k->code) {
+    Keyboard.release1(k->fnCode, false);
   }
 }
 

@@ -323,7 +323,7 @@ def display_arduino(mappings)
 
   mappings.sort_by(&:to_i).each do |mapping|
     keystroke = ASCII_MAP_UK[mapping.key]
-    puts "  { 0b000000#{mapping.chord.binary}, #{keystroke[0].to_s.rjust(3)}, #{keystroke[1].to_s.ljust(5)} }, /* #{mapping.key} */"
+    puts "  { 0b000000#{mapping.chord.binary}, #{keystroke[0].to_s.rjust(3)}, #{keystroke[1].to_s.ljust(5)}, #{keystroke[2].to_s.rjust(3)} }, /* #{mapping.key} */"
   end
 
   puts '};'
