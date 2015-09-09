@@ -303,15 +303,24 @@ Keystroke* lookupChord(int chord) {
     else
       imax = imid - 1;
   }
-  return &chordMap[0];
+  return 0;
 }
+
+void pressChord(int chord);
+void releaseChord(int chord);
+
+#include "macros"
 
 void pressChord(int chord) {
   Keystroke* k = lookupChord(chord);
   if (functionKeyPressed) {
     Keyboard.press1(k->fnCode, false);
   } else {
-    Keyboard.press1(k->code, k->shift);
+    if (k == 0) {
+      handleMacros(chord);
+    } else {
+      Keyboard.press1(k->code, k->shift);
+    }
   }
   chordTriggered = true;
   waitingForChord = false;

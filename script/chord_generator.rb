@@ -329,10 +329,49 @@ def display_arduino(mappings)
   puts '};'
 end
 
+def macros(mappings)
+  {
+    parse('..OOO O....') => to_chords("bundle exec ".split(''), mappings),
+    parse('..OOO .O...') => to_chords("git status".split('') << 'RETURN', mappings),
+    parse('..OOO ..O..') => to_chords("git commit -m ''".split('') << 'LEFT_ARROW', mappings),
+    parse('..OOO ...O.') => to_chords("git log --decorate --graph --oneline".split('') << 'RETURN', mappings),
+  }
+end
+
+def display_macro(chord, mappings)
+  puts "    // #{mappings.map(&:key).join}"
+  puts "    case 0b000000#{chord.binary}:"
+  mappings.each do |mapping|
+    puts "      pressChord(0b000000#{mapping.chord.binary});";
+    puts "      releaseChord(0b000000#{mapping.chord.binary});";
+  end
+  puts "      break;"
+end
+
+def to_chords(keys, mappings)
+  keys.map do |key|
+    to_chord(key, mappings)
+  end
+end
+
+def to_chord(key, mappings)
+  mappings.find do |mapping|
+    mapping.key == key
+  end
+end
+
 if ARGV[0] == 'c'
   display_chords(free_chords)
 elsif ARGV[0] == 'a'
   display_arduino(mappings)
+elsif ARGV[0] == 's'
+  puts "void handleMacros(int chord) {"
+  puts "  switch (chord) {"
+  macros(mappings).each do |trigger_chord, chords|
+    display_macro(trigger_chord, chords)
+  end
+  puts "  }"
+  puts "}"
 else
   display_mappings(mappings)
 end
