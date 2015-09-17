@@ -174,11 +174,6 @@ def subtract(a1, a2)
   result
 end
 
-# KEY_LEFT_CTRL
-# KEY_LEFT_SHIFT
-# KEY_LEFT_ALT
-# KEY_LEFT_GUI
-
 fixed = {
   ' '           => parse('....O .....'),
   '!'           => parse('OO... .....'),
