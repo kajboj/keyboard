@@ -12,7 +12,7 @@ class Word
   end
 
   def to_s
-    @word.ljust(20) + @pivots.join(', ')
+    @word # .ljust(20) + @pivots.join(', ')
   end
 
   private
@@ -43,7 +43,7 @@ class Word
     mapping[1..-1].each do |mapping|
       prev1s  = indexes1(prev.chord.binary)
       mapping1s = indexes1(mapping.chord.binary)
-      if (mapping1s.size >= prev1s.size) && (mapping1s - prev1s).size < mapping1s.size
+      if (mapping1s.size > 1) &&(mapping1s.size >= prev1s.size) && (mapping1s - prev1s).size < mapping1s.size
         p += mapping.key
       else
         ps << p if p.size > 1
@@ -65,4 +65,22 @@ words = words.map do |s|
   Word.new(s, mappings)
 end
 
-puts words
+pivots = {}
+
+words.each do |word|
+  word.pivots.each do |pivot|
+    pivots[pivot] ||= []
+    pivots[pivot] << word
+  end
+end
+
+require 'json'
+
+pivots.keys.sort_by do |pivot|
+  pivots[pivot].size
+end.reverse.take(20).each do |pivot|
+  puts pivot
+  puts pivots[pivot].size
+  puts pivots[pivot]
+  puts
+end
