@@ -8,6 +8,8 @@ typedef struct {
 #include "chord_map"
 #include "pin_map_v2"
 
+static const unsigned long MAC_LAYOUT_SWITCH_PIN = LEFT_THUMB_PIN;
+
 static const unsigned long DEBOUNCE_DELAY = 10;
 static const unsigned long CHORDING_DELAY = 50;
 
@@ -176,6 +178,10 @@ void setup() {
   waitingForChord = false;
   chordTriggered = false;
   functionKeyPressed = false;
+
+  if (digitalRead(MAC_LAYOUT_SWITCH_PIN) == HIGH) {
+    chordMap[0] = { 0b0000000000000001,  12, false,  52 };
+  }
 
   Keyboard.begin();
 }
