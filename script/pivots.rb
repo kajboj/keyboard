@@ -59,6 +59,15 @@ class Word
   end
 end
 
+class Pivot
+  attr_reader :pivot, :words
+
+  def initialize(pivot, words)
+    @pivot = pivot
+    @words = words
+  end
+end
+
 words = File.read(ARGV[0] || 'script/words').split("\n")
 
 words = words.map do |s|
@@ -74,13 +83,14 @@ words.each do |word|
   end
 end
 
-require 'json'
+pivots = pivots.map do |pivot, words|
+  Pivot.new(pivot, words)
+end
 
-pivots.keys.sort_by do |pivot|
-  pivots[pivot].size
+pivots.sort_by do |pivot|
+  pivot.words.size
 end.reverse.take(20).each do |pivot|
-  puts pivot
-  puts pivots[pivot].size
-  puts pivots[pivot]
+  puts pivot.pivot
+  puts pivot.words.size
   puts
 end
