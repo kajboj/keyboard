@@ -180,7 +180,7 @@ void setup() {
   functionKeyPressed = false;
 
   if (digitalRead(MAC_LAYOUT_SWITCH_PIN) == HIGH) {
-    chordMap[0] = { 0b0000000000000001,  12, false,  52 };
+    macLayoutSetup();
   }
 
   Keyboard.begin();

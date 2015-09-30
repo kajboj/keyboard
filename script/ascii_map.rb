@@ -1,6 +1,5 @@
 # encoding: UTF-8
 
-SHIFT = 0x80
 ASCII_MAP = {
   'a'           => [  4, false,  4],
   'b'           => [  5, false,  5],
@@ -97,4 +96,8 @@ ASCII_MAP_UK = ASCII_MAP.merge(
   '|'  => [ 100, true,  100 ],
   '#'  => [  50, false,  50 ],
   '~'  => [  50, true,   50 ],
+)
+
+ASCII_MAP_UK_MAC = ASCII_MAP.merge(
+  '@'  => [  4, true,   4 ]
 )
